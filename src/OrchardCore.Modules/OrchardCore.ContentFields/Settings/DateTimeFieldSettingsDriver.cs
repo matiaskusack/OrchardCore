@@ -12,14 +12,23 @@ namespace OrchardCore.ContentFields.Settings
     public class DateTimeFieldSettingsDriver
         : ContentPartFieldDefinitionDisplayDriver<DateTimeField>
     {
-        public override IDisplayResult Edit(ContentPartFieldDefinition model)
+        public override IDisplayResult Edit(ContentPartFieldDefinition partFieldDefinition)
         {
-            return base.Edit(model);
+            return Shape<DateTimeFieldSettings>(
+                "DateTimeFieldSettings_Edit", 
+                model => partFieldDefinition.Settings.Populate(model)
+            ).Location("Content");
         }
 
-        public override Task<IDisplayResult> UpdateAsync(ContentPartFieldDefinition model, UpdatePartFieldEditorContext context)
+        public override async Task<IDisplayResult> UpdateAsync(ContentPartFieldDefinition partFieldDefinition, UpdatePartFieldEditorContext context)
         {
-            return base.UpdateAsync(model, context);
+            var model = new DateTimeFieldSettings();
+
+            await context.Updater.TryUpdateModelAsync(model, Prefix);
+
+            context.Builder.MergeSettings(model);
+
+            return Edit(partFieldDefinition);
         }
     }
 }

@@ -1,0 +1,56 @@
+@model OrchardCore.ContentFields.Settings.DateTimeFieldSettings
+
+@inject OrchardCore.Settings.ISiteService SiteService
+
+@{
+    var siteSettings = await SiteService.GetSiteSettingsAsync();
+    var culture = System.Globalization.CultureInfo.InvariantCulture;
+    if (!string.IsNullOrEmpty(siteSettings.Culture)) // siteSettings.Culture is null here, seems like a SiteService bug
+    {
+        culture = new System.Globalization.CultureInfo(siteSettings.Culture);
+    }
+    string minimum = (Model.Minimum.HasValue) ? Model.Minimum.Value.ToString(culture) : string.Empty;
+    string maximum = (Model.Maximum.HasValue) ? Model.Maximum.Value.ToString(culture) : string.Empty;
+}
+
+<fieldset class="form-group">
+    <div class="form-check">
+        <label class="form-check-label">
+            <input asp-for="Required" type="checkbox" class="form-check-input" />
+            <span class="hint">@T["Check if the field is required."]</span>
+        </label>
+    </div>
+</fieldset>
+
+<fieldset class="form-group">
+    <div class="form-check">
+        <label class="form-check-label">
+            <input asp-for="WithTime" class="form-check-input" type="checkbox" />
+            <span class="hint">@T["Check if field should use time."]</span>
+        </label>
+    </div>
+</fieldset>
+
+<fieldset class="form-group">
+    <div class="row col-md">
+        <label asp-for="Hint">@T["Hint"]</label>
+        <textarea asp-for="Hint" rows="2" class="form-control"></textarea>
+        <span class="hint">@T["The hint text to display for this field on the editor."]</span>
+    </div>
+</fieldset>
+
+<fieldset class="form-group">
+    <div class="row col-sm">
+        <label for="Minimum">@T["Minimum"]</label>
+        <input asp-for="Minimum" type="datetime-local" class="form-control" />
+        <span class="hint">@T["The minimum value allowed. (optional)"]</span>
+    </div>
+</fieldset>
+
+<fieldset class="form-group">
+    <div class="row col-sm">
+        <label for="Maximum">@T["Maximum"]</label>
+        <input asp-for="Maximum" type="datetime-local" class="form-control" />
+        <span class="hint">@T["The maximum value allowed. (optional)"]</span>
+    </div>
+</fieldset>
