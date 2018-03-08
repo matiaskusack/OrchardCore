@@ -1,4 +1,5 @@
 using System;
+using Fluid;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
@@ -126,8 +127,9 @@ namespace OrchardCore.Contents
     {
         public override void ConfigureServices(IServiceCollection services)
         {
-            services.AddLiquidFilter<ContentFilter>("content");
-            services.AddLiquidFilter<BuildDisplayFilter>("build_display");
+            services.AddScoped<ILiquidTemplateEventHandler, ContentLiquidTemplateEventHandler>();
+
+            services.AddLiquidFilter<BuildDisplayFilter>("shape_build_display");
         }
     }
 }

@@ -31,15 +31,19 @@ namespace OrchardCore.Environment.Extensions.Features
             var features = manifestInfo.ModuleInfo.Features.ToList();
             if (features.Count > 0)
             {
-                foreach (var feature in features.Where(f => f.Exists))
+                foreach (var feature in features)
                 {
+                    if (String.IsNullOrWhiteSpace(feature.Id))
+                    {
+                        throw new ArgumentException(
+                            $"A feature is missing a mandatory 'Id' property in the Module '{extensionInfo.Id}'");
+                    }
+
                     var featureId = feature.Id;
                     var featureName = feature.Name ?? feature.Id;
 
                     var featureDependencyIds = feature.Dependencies
-                            .Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries)
-                            .Select(e => e.Trim())
-                            .ToArray();
+                        .Select(e => e.Trim()).ToArray();
 
                     if (!int.TryParse(feature.Priority ?? manifestInfo.ModuleInfo.Priority, out int featurePriority))
                     {
@@ -90,9 +94,7 @@ namespace OrchardCore.Environment.Extensions.Features
                 var featureName = manifestInfo.Name;
 
                 var featureDependencyIds = manifestInfo.ModuleInfo.Dependencies
-                        .Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries)
-                        .Select(e => e.Trim())
-                        .ToArray();
+                    .Select(e => e.Trim()).ToArray();
 
                 if (!int.TryParse(manifestInfo.ModuleInfo.Priority, out int featurePriority))
                 {
