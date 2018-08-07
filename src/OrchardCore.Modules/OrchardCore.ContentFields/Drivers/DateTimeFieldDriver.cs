@@ -12,35 +12,17 @@ using OrchardCore.ContentManagement.Metadata.Models;
 using OrchardCore.DisplayManagement.ModelBinding;
 using OrchardCore.DisplayManagement.Views;
 using OrchardCore.Settings;
+using OrchardCore.ContentFields.Extensions;
 
 namespace OrchardCore.ContentFields.Drivers
 {
     public class DateTimeFieldDriver
          : ContentFieldDisplayDriver<DateTimeField>
     {
-        ISiteService _siteSettings;
         public IStringLocalizer T { get; set; }
 
-        System.Globalization.CultureInfo _cultureInfo = null;
-        public System.Globalization.CultureInfo Culture
+        public DateTimeFieldDriver(IStringLocalizer<DateTimeFieldDriver> localizer)
         {
-            get
-            {
-                if (_cultureInfo == null)
-                {
-                    var culture = _siteSettings.GetSiteSettingsAsync().GetAwaiter().GetResult().Culture;
-                    // Site settings provides a Null culture. So we use invariant
-                    if (string.IsNullOrEmpty(culture))
-                        return System.Globalization.CultureInfo.InvariantCulture;
-                    _cultureInfo = new System.Globalization.CultureInfo(culture);
-                }
-                return _cultureInfo;
-            }
-        }
-
-        public DateTimeFieldDriver(ISiteService siteService, IStringLocalizer<DateTimeFieldDriver> localizer)
-        {
-            _siteSettings = siteService;
             T = localizer;
         }
 
@@ -59,7 +41,8 @@ namespace OrchardCore.ContentFields.Drivers
             return Shape<EditDateTimeFieldViewModel>("DateTimeField_Edit", model =>
             {
                 var settings = context.PartFieldDefinition.Settings.ToObject<DateTimeFieldSettings>();
-                model.Value = Format(context.IsNew ? DateTime.Now : field.Value, settings);
+                var dateValue = context.IsNew ? DateTime.Now : field.Value;
+                model.Value = dateValue.HasValue ? dateValue.Value.ToHtmlValueString(settings) : string.Empty;
 
                 model.Field = field;
                 model.Part = context.ContentPart;
@@ -85,8 +68,7 @@ namespace OrchardCore.ContentFields.Drivers
                 updater.ModelState.AddModelError(Prefix, T["The {0} field is required.", context.PartFieldDefinition.DisplayName()]);
                 return Edit(field, context);
             }
-
-            if (!DateTime.TryParseExact(viewModel.Value, GetFormat(settings), Culture, System.Globalization.DateTimeStyles.None, out value))
+            if (!DateTime.TryParse(viewModel.Value, out value))
             {
                 updater.ModelState.AddModelError(Prefix, T["{0} is an invalid date.", context.PartFieldDefinition.DisplayName()]);
                 return Edit(field, context);
@@ -100,19 +82,6 @@ namespace OrchardCore.ContentFields.Drivers
                 updater.ModelState.AddModelError(Prefix, T["The value must be less than {0}.", settings.Maximum.Value]);
 
             return Edit(field, context);
-        }
-
-        private string Format(DateTime? dateTime, DateTimeFieldSettings settings)
-        {
-            if (!dateTime.HasValue)
-                return string.Empty;
-            var format = Culture.DateTimeFormat.ShortDatePattern + (settings.WithTime ? $" {Culture.DateTimeFormat.ShortTimePattern}" : string.Empty);
-            return dateTime.Value.ToString(format);
-        }
-
-        private string GetFormat(DateTimeFieldSettings settings)
-        {
-            return settings.WithTime ? Culture.DateTimeFormat.FullDateTimePattern : Culture.DateTimeFormat.ShortDatePattern;
         }
     }
 }

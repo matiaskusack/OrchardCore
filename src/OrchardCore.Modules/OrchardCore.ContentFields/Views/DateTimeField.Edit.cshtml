@@ -1,18 +1,18 @@
 @model OrchardCore.ContentFields.ViewModels.EditDateTimeFieldViewModel
-@using System.Globalization
-@using OrchardCore.ContentManagement.Metadata.Models
+@using OrchardCore.ContentFields.Extensions;
 @using OrchardCore.ContentFields.Settings;
+@using OrchardCore.ContentManagement.Metadata.Models
+
 @{
     var settings = Model.PartFieldDefinition.Settings.ToObject<DateTimeFieldSettings>();
-    string name = Model.PartFieldDefinition.DisplayName();
-    DateTime min = settings.Minimum.HasValue ? settings.Minimum.Value : DateTime.MinValue;
-    DateTime max = settings.Maximum.HasValue ? settings.Maximum.Value : DateTime.MaxValue;
+    var min = (settings.Minimum.HasValue ? settings.Minimum.Value : DateTime.MinValue).ToHtmlValueString(settings);
+    var max = (settings.Maximum.HasValue ? settings.Maximum.Value : DateTime.MaxValue).ToHtmlValueString(settings);
 }
 
 <fieldset class="form-group">
     <div class="row col-sm">
-        <label asp-for="Value">@name</label>
-        <input asp-for="Value" type="@(settings.WithTime ? "datetime-local" : "date")" class="form-control content-preview-select" required="@settings.Required" min="@min" max="@max" />
+        <label asp-for="Value">@Model.PartFieldDefinition.DisplayName()</label>
+        <input asp-for="Value" type="@(settings.WithTime ? "datetime-local" : "date")" min="@min" max="@max" class="form-control content-preview-select" required="@settings.Required" />
         <span class="hint">@settings.Hint</span>
     </div>
 </fieldset>

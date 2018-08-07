@@ -4,7 +4,7 @@
 
 @{
     var siteSettings = await SiteService.GetSiteSettingsAsync();
-    var culture = System.Globalization.CultureInfo.InvariantCulture;
+    var culture = System.Globalization.CultureInfo.CurrentUICulture;
     if (!string.IsNullOrEmpty(siteSettings.Culture)) // siteSettings.Culture is null here, seems like a SiteService bug
     {
         culture = new System.Globalization.CultureInfo(siteSettings.Culture);
