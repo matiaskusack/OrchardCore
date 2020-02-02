@@ -1,8 +1,13 @@
+using System.Collections.Concurrent;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Net.Http.Headers;
+using OrchardCore.DeferredTasks;
 using OrchardCore.Environment.Shell;
+using OrchardCore.Environment.Shell.Models;
 
 namespace OrchardCore.Modules
 {
@@ -14,6 +19,7 @@ namespace OrchardCore.Modules
         private readonly RequestDelegate _next;
         private readonly IShellHost _orchardHost;
         private readonly IRunningShellTable _runningShellTable;
+        private readonly ConcurrentDictionary<string, SemaphoreSlim> _semaphores = new ConcurrentDictionary<string, SemaphoreSlim>();
 
         public ModularTenantContainerMiddleware(
             RequestDelegate next,
@@ -28,72 +34,85 @@ namespace OrchardCore.Modules
         public async Task Invoke(HttpContext httpContext)
         {
             // Ensure all ShellContext are loaded and available.
-            _orchardHost.Initialize();
+            await _orchardHost.InitializeAsync();
 
-            var shellSetting = _runningShellTable.Match(httpContext);
-
-            // Register the shell settings as a custom feature.
-            httpContext.Features.Set(shellSetting);
+            var shellSettings = _runningShellTable.Match(httpContext);
 
             // We only serve the next request if the tenant has been resolved.
-            if (shellSetting != null)
+            if (shellSettings != null)
             {
-                var shellContext = _orchardHost.GetOrCreateShellContext(shellSetting);
-
-                var existingRequestServices = httpContext.RequestServices;
-                using (var scope = shellContext.EnterServiceScope())
+                if (shellSettings.State == TenantState.Initializing)
                 {
+                    httpContext.Response.Headers.Add(HeaderNames.RetryAfter, "10");
+                    httpContext.Response.StatusCode = StatusCodes.Status503ServiceUnavailable;
+                    await httpContext.Response.WriteAsync("The requested tenant is currently initializing.");
+                    return;
+                }
+
+                var hasPendingTasks = false;
+
+                // We need to get a scope and the ShellContext that created it
+                var (scope, shellContext) = await _orchardHost.GetScopeAndContextAsync(shellSettings);
+
+                using (scope)
+                {
+                    // Register the shell context as a custom feature
+                    httpContext.Features.Set(shellContext);
+
                     if (!shellContext.IsActivated)
                     {
-                        lock (shellContext)
+                        var semaphore = _semaphores.GetOrAdd(shellSettings.Name, (name) => new SemaphoreSlim(1));
+
+                        await semaphore.WaitAsync();
+
+                        try
                         {
                             // The tenant gets activated here
                             if (!shellContext.IsActivated)
                             {
-                                var tenantEvents = scope.ServiceProvider.GetServices<IModularTenantEvents>();
-
-                                foreach (var tenantEvent in tenantEvents)
+                                using (var activatingScope = await _orchardHost.GetScopeAsync(shellSettings))
                                 {
-                                    tenantEvent.ActivatingAsync().Wait();
+
+                                    var tenantEvents = activatingScope.ServiceProvider.GetServices<IModularTenantEvents>();
+
+                                    foreach (var tenantEvent in tenantEvents)
+                                    {
+                                        await tenantEvent.ActivatingAsync();
+                                    }
+
+                                    httpContext.Items["BuildPipeline"] = true;
+
+                                    foreach (var tenantEvent in tenantEvents.Reverse())
+                                    {
+                                        await tenantEvent.ActivatedAsync();
+                                    }
                                 }
 
-                                httpContext.Items["BuildPipeline"] = true;
                                 shellContext.IsActivated = true;
-
-                                foreach (var tenantEvent in tenantEvents.Reverse())
-                                {
-                                    tenantEvent.ActivatedAsync().Wait();
-                                }
                             }
+                        }
+                        finally
+                        {
+                            semaphore.Release();
+                            _semaphores.TryRemove(shellSettings.Name, out semaphore);
                         }
                     }
 
-                    shellContext.RequestStarted();
+                    await _next.Invoke(httpContext);
+                    var deferredTaskEngine = scope.ServiceProvider.GetService<IDeferredTaskEngine>();
+                    hasPendingTasks = deferredTaskEngine?.HasPendingTasks ?? false;
+                }
 
-                    try
+                // Create a new scope only if there are pending tasks
+                if (hasPendingTasks)
+                {
+                    using (var pendingScope = await _orchardHost.GetScopeAsync(shellSettings))
                     {
-                        await _next.Invoke(httpContext);
-                    }
-                    finally
-                    {
-                        shellContext.RequestEnded();
-
-                        // Call all terminating events before releasing the shell context
-                        if (shellContext.CanTerminate)
+                        if (pendingScope != null)
                         {
-                            var tenantEvents = scope.ServiceProvider.GetServices<IModularTenantEvents>();
-
-                            foreach (var tenantEvent in tenantEvents)
-                            {
-                                await tenantEvent.TerminatingAsync();
-                            }
-
-                            foreach (var tenantEvent in tenantEvents.Reverse())
-                            {
-                                await tenantEvent.TerminatedAsync();
-                            }
-
-                            shellContext.Dispose();
+                            var deferredTaskEngine = pendingScope.ServiceProvider.GetService<IDeferredTaskEngine>();
+                            var context = new DeferredTaskContext(pendingScope.ServiceProvider);
+                            await deferredTaskEngine.ExecuteTasksAsync(context);
                         }
                     }
                 }

@@ -2,13 +2,13 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using OrchardCore.Modules;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using OrchardCore.ContentManagement;
 using OrchardCore.Entities;
 using OrchardCore.Environment.Shell;
 using OrchardCore.Indexing;
+using OrchardCore.Modules;
 using OrchardCore.Settings;
 
 namespace OrchardCore.Lucene
@@ -71,12 +71,10 @@ namespace OrchardCore.Lucene
 
             IndexingTask[] batch;
 
-            var shellContext = _shellHost.GetOrCreateShellContext(_shellSettings);
-
             do
             {
                 // Create a scope for the content manager
-                using (var scope = shellContext.EnterServiceScope())
+                using (var scope = await _shellHost.GetScopeAsync(_shellSettings))
                 {
                     // Load the next batch of tasks
                     batch = (await _indexingTaskManager.GetIndexingTasksAsync(lastTaskId, BatchSize)).ToArray();
@@ -104,6 +102,12 @@ namespace OrchardCore.Lucene
                         if (task.Type == IndexingTaskTypes.Update)
                         {
                             var contentItem = await contentManager.GetAsync(task.ContentItemId);
+
+                            if (contentItem == null)
+                            {
+                                continue;
+                            }
+
                             var context = new BuildIndexContext(new DocumentIndex(task.ContentItemId), contentItem, contentItem.ContentType);
 
                             // Update the document from the index if its lastIndexId is smaller than the current task id. 

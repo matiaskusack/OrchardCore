@@ -5,9 +5,7 @@ using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using OrchardCore.Environment.Extensions.Features;
 using OrchardCore.Environment.Extensions.Loaders;
 using OrchardCore.Environment.Extensions.Manifests;
@@ -18,9 +16,8 @@ namespace OrchardCore.Environment.Extensions
 {
     public class ExtensionManager : IExtensionManager
     {
-        private readonly IHostingEnvironment _hostingEnvironment;
+        private readonly IApplicationContext _applicationContext;
 
-        private readonly ManifestOptions _manifestOptions;
         private readonly IEnumerable<IExtensionDependencyStrategy> _extensionDependencyStrategies;
         private readonly IEnumerable<IExtensionPriorityStrategy> _extensionPriorityStrategies;
         private readonly ITypeFeatureProvider _typeFeatureProvider;
@@ -31,19 +28,19 @@ namespace OrchardCore.Environment.Extensions
         private IDictionary<string, FeatureEntry> _features;
         private IFeatureInfo[] _featureInfos;
 
-        private ConcurrentDictionary<string, Lazy<IEnumerable<IFeatureInfo>>> _featureDependencies
+        private readonly ConcurrentDictionary<string, Lazy<IEnumerable<IFeatureInfo>>> _featureDependencies
             = new ConcurrentDictionary<string, Lazy<IEnumerable<IFeatureInfo>>>();
 
-        private ConcurrentDictionary<string, Lazy<IEnumerable<IFeatureInfo>>> _dependentFeatures
+        private readonly ConcurrentDictionary<string, Lazy<IEnumerable<IFeatureInfo>>> _dependentFeatures
             = new ConcurrentDictionary<string, Lazy<IEnumerable<IFeatureInfo>>>();
 
-        private static Func<IFeatureInfo, IFeatureInfo[], IFeatureInfo[]> GetDependentFeaturesFunc =
+        private static readonly Func<IFeatureInfo, IFeatureInfo[], IFeatureInfo[]> GetDependentFeaturesFunc =
             new Func<IFeatureInfo, IFeatureInfo[], IFeatureInfo[]>(
                 (currentFeature, fs) => fs
                     .Where(f => f.Dependencies.Any(dep => dep == currentFeature.Id))
                     .ToArray());
 
-        private static Func<IFeatureInfo, IFeatureInfo[], IFeatureInfo[]> GetFeatureDependenciesFunc =
+        private static readonly Func<IFeatureInfo, IFeatureInfo[], IFeatureInfo[]> GetFeatureDependenciesFunc =
             new Func<IFeatureInfo, IFeatureInfo[], IFeatureInfo[]>(
                 (currentFeature, fs) => fs
                     .Where(f => currentFeature.Dependencies.Any(dep => dep == f.Id))
@@ -53,27 +50,22 @@ namespace OrchardCore.Environment.Extensions
         private static object InitializationSyncLock = new object();
 
         public ExtensionManager(
-            IHostingEnvironment hostingEnvironment,
-            IOptions<ManifestOptions> manifestOptionsAccessor,
+            IApplicationContext applicationContext,
             IEnumerable<IExtensionDependencyStrategy> extensionDependencyStrategies,
             IEnumerable<IExtensionPriorityStrategy> extensionPriorityStrategies,
             ITypeFeatureProvider typeFeatureProvider,
             IFeaturesProvider featuresProvider,
-            ILogger<ExtensionManager> logger,
-            IStringLocalizer<ExtensionManager> localizer)
+            ILogger<ExtensionManager> logger)
         {
-            _hostingEnvironment = hostingEnvironment;
-            _manifestOptions = manifestOptionsAccessor.Value;
+            _applicationContext = applicationContext;
             _extensionDependencyStrategies = extensionDependencyStrategies;
             _extensionPriorityStrategies = extensionPriorityStrategies;
             _typeFeatureProvider = typeFeatureProvider;
             _featuresProvider = featuresProvider;
             L = logger;
-            T = localizer;
         }
 
         public ILogger L { get; set; }
-        public IStringLocalizer T { get; set; }
 
         public IExtensionInfo GetExtension(string extensionId)
         {
@@ -246,31 +238,16 @@ namespace OrchardCore.Environment.Extensions
                     return;
                 }
 
-                var moduleNames = _hostingEnvironment.GetApplication().ModuleNames;
+                var modules = _applicationContext.Application.Modules;
                 var loadedExtensions = new ConcurrentDictionary<string, ExtensionEntry>();
 
                 // Load all extensions in parallel
-                Parallel.ForEach(moduleNames, new ParallelOptions { MaxDegreeOfParallelism = 8 }, (name) =>
+                Parallel.ForEach(modules, new ParallelOptions { MaxDegreeOfParallelism = 8 }, (module) =>
                 {
-                    var module = _hostingEnvironment.GetModule(name);
-
                     if (!module.ModuleInfo.Exists)
                     {
                         return;
                     }
-
-                    var manifestConfiguration = _manifestOptions
-                        .ManifestConfigurations
-                        .FirstOrDefault(mc =>
-                        {
-                            return module.ModuleInfo.Type.Equals(mc.Type, StringComparison.OrdinalIgnoreCase);
-                        });
-
-                    if (manifestConfiguration == null)
-                    {
-                        return;
-                    }
-
                     var manifestInfo = new ManifestInfo(module.ModuleInfo);
 
                     var extensionInfo = new ExtensionInfo(module.SubPath, manifestInfo, (mi, ei) => {

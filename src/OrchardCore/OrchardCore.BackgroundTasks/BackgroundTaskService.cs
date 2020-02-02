@@ -5,10 +5,10 @@ using System.Reflection;
 using System.Security;
 using System.Threading;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using OrchardCore.Environment.Shell;
 using OrchardCore.Environment.Shell.Models;
-using OrchardCore.Hosting.ShellBuilders;
 
 namespace OrchardCore.BackgroundTasks
 {
@@ -19,6 +19,7 @@ namespace OrchardCore.BackgroundTasks
 
         private readonly Dictionary<string, IEnumerable<IBackgroundTask>> _tasks;
         private readonly IApplicationLifetime _applicationLifetime;
+        private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly IShellHost _orchardHost;
         private readonly ShellSettings _shellSettings;
         private readonly Dictionary<IBackgroundTask, BackgroundTaskState> _states;
@@ -29,12 +30,14 @@ namespace OrchardCore.BackgroundTasks
             IShellHost orchardHost,
             ShellSettings shellSettings,
             IApplicationLifetime applicationLifetime,
+            IHttpContextAccessor httpContextAccessor,
             IEnumerable<IBackgroundTask> tasks,
             ILogger<BackgroundTaskService> logger)
         {
             _shellSettings = shellSettings;
             _orchardHost = orchardHost;
             _applicationLifetime = applicationLifetime;
+            _httpContextAccessor = httpContextAccessor;
             _tasks = tasks.GroupBy(GetGroupName).ToDictionary(x => x.Key, x => x.Select(i => i));
             _states = tasks.ToDictionary(x => x, x => BackgroundTaskState.Idle);
             _timers = _tasks.Keys.ToDictionary(x => x, x => CreateTimer(DoWorkAsync, x));
@@ -63,15 +66,18 @@ namespace OrchardCore.BackgroundTasks
         {
             // DoWork needs to be re-entrant as Timer may call the callback before the previous callback has returned.
             // So, because a task may take longer than the period itself, DoWork needs to check if it's still running.
-            ShellContext shellContext = _orchardHost.GetOrCreateShellContext(_shellSettings);
 
             var groupName = group as string ?? "";
+
+            // Because the execution flow has been suppressed before creating timers, here the 'HttpContext'
+            // is always null and can be replaced by a new fake 'HttpContext' without overriding anything.
+            _httpContextAccessor.HttpContext = new DefaultHttpContext();
 
             foreach (var task in _tasks[groupName])
             {
                 var taskName = task.GetType().FullName;
 
-                using (var scope = shellContext.EnterServiceScope())
+                using (var scope = await _orchardHost.GetScopeAsync(_shellSettings))
                 {
                     try
                     {
@@ -93,22 +99,19 @@ namespace OrchardCore.BackgroundTasks
 
                         if (Logger.IsEnabled(LogLevel.Information))
                         {
-                            Logger.LogInformation("Start processing background task \"{0}\".", taskName);
+                            Logger.LogInformation("Start processing background task '{BackgroundTaskName}'.", taskName);
                         }
 
                         await task.DoWorkAsync(scope.ServiceProvider, _applicationLifetime.ApplicationStopping);
 
                         if (Logger.IsEnabled(LogLevel.Information))
                         {
-                            Logger.LogInformation("Finished processing background task \"{0}\".", taskName);
+                            Logger.LogInformation("Finished processing background task '{BackgroundTaskName}'.", taskName);
                         }
                     }
                     catch (Exception ex)
                     {
-                        if (Logger.IsEnabled(LogLevel.Error))
-                        {
-                            Logger.LogError(ex, $"Error while processing background task \"{taskName}\"");
-                        }
+                        Logger.LogError(ex, "Error while processing background task '{BackgroundTaskName}'", taskName);
                     }
                     finally
                     {
@@ -129,7 +132,9 @@ namespace OrchardCore.BackgroundTasks
         {
             lock (_states)
             {
-                foreach (var task in _states.Keys)
+                var tasks = _states.Keys.ToArray();
+
+                foreach (var task in tasks)
                 {
                     _states[task] = BackgroundTaskState.Stopped;
                 }

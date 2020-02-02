@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Localization;
 using Microsoft.Extensions.Localization;
+using OrchardCore.Data;
 using OrchardCore.DisplayManagement.Notify;
 using OrchardCore.Environment.Shell;
 using OrchardCore.Environment.Shell.Models;
@@ -19,6 +20,7 @@ namespace OrchardCore.Tenants.Controllers
     {
         private readonly IShellHost _orchardHost;
         private readonly IShellSettingsManager _shellSettingsManager;
+        private readonly IEnumerable<DatabaseProvider> _databaseProviders;
         private readonly IAuthorizationService _authorizationService;
         private readonly ShellSettings _currentShellSettings;
         private readonly INotifier _notifier;
@@ -28,6 +30,7 @@ namespace OrchardCore.Tenants.Controllers
             ShellSettings currentShellSettings,
             IAuthorizationService authorizationService,
             IShellSettingsManager shellSettingsManager,
+            IEnumerable<DatabaseProvider> databaseProviders,
             INotifier notifier,
             IStringLocalizer<AdminController> stringLocalizer,
             IHtmlLocalizer<AdminController> htmlLocalizer)
@@ -35,6 +38,7 @@ namespace OrchardCore.Tenants.Controllers
             _orchardHost = orchardHost;
             _authorizationService = authorizationService;
             _shellSettingsManager = shellSettingsManager;
+            _databaseProviders = databaseProviders;
             _currentShellSettings = currentShellSettings;
             _notifier = notifier;
 
@@ -45,9 +49,9 @@ namespace OrchardCore.Tenants.Controllers
         public IStringLocalizer S { get; set; }
         public IHtmlLocalizer H { get; set; }
 
-        public IActionResult Index()
+        public async Task<IActionResult> Index()
         {
-            var shells = GetShells();
+            var shells = await GetShellsAsync();
 
             var model = new AdminIndexViewModel
             {
@@ -95,7 +99,7 @@ namespace OrchardCore.Tenants.Controllers
 
             if (ModelState.IsValid)
             {
-                ValidateViewModel(model, true);
+                await ValidateViewModel(model, true);
             }
 
             if (ModelState.IsValid)
@@ -112,7 +116,7 @@ namespace OrchardCore.Tenants.Controllers
                 };
 
                 _shellSettingsManager.SaveSettings(shellSettings);
-                var shellContext = _orchardHost.GetOrCreateShellContext(shellSettings);
+                var shellContext = await _orchardHost.GetOrCreateShellContextAsync(shellSettings);
 
                 return RedirectToAction(nameof(Index));
             }
@@ -133,7 +137,7 @@ namespace OrchardCore.Tenants.Controllers
                 return Unauthorized();
             }
 
-            var shellContext = GetShells()
+            var shellContext = (await GetShellsAsync())
                 .Where(x => string.Equals(x.Settings.Name, id, StringComparison.OrdinalIgnoreCase))
                 .FirstOrDefault();
 
@@ -179,10 +183,10 @@ namespace OrchardCore.Tenants.Controllers
 
             if (ModelState.IsValid)
             {
-                ValidateViewModel(model, false);
+                await ValidateViewModel(model, false);
             }
 
-            var shellContext = GetShells()
+            var shellContext = (await GetShellsAsync())
                 .Where(x => string.Equals(x.Settings.Name, model.Name, StringComparison.OrdinalIgnoreCase))
                 .FirstOrDefault();
 
@@ -207,7 +211,7 @@ namespace OrchardCore.Tenants.Controllers
                     shellSettings.ConnectionString = model.ConnectionString;
                 }
 
-                _orchardHost.UpdateShellSettings(shellSettings);
+                await _orchardHost.UpdateShellSettingsAsync(shellSettings);
 
                 return RedirectToAction(nameof(Index));
             }
@@ -239,7 +243,7 @@ namespace OrchardCore.Tenants.Controllers
                 return Unauthorized();
             }
 
-            var shellContext = GetShells()
+            var shellContext = (await GetShellsAsync())
                 .Where(x => string.Equals(x.Settings.Name, id, StringComparison.OrdinalIgnoreCase))
                 .FirstOrDefault();
 
@@ -258,12 +262,12 @@ namespace OrchardCore.Tenants.Controllers
 
             if (shellSettings.State != TenantState.Running)
             {
-                _notifier.Error(H["You can only disable a Running shell."]);
+                _notifier.Error(H["You can only disable an Enabled tenant."]);
                 return RedirectToAction(nameof(Index));
             }
 
             shellSettings.State = TenantState.Disabled;
-            _orchardHost.UpdateShellSettings(shellSettings);
+            await _orchardHost.UpdateShellSettingsAsync(shellSettings);
 
             return RedirectToAction(nameof(Index));
         }
@@ -281,8 +285,7 @@ namespace OrchardCore.Tenants.Controllers
                 return Unauthorized();
             }
 
-            var shellContext = _orchardHost
-                .ListShellContexts()
+            var shellContext = (await _orchardHost.ListShellContextsAsync())
                 .OrderBy(x => x.Settings.Name)
                 .Where(x => string.Equals(x.Settings.Name, id, StringComparison.OrdinalIgnoreCase))
                 .FirstOrDefault();
@@ -296,11 +299,11 @@ namespace OrchardCore.Tenants.Controllers
 
             if (shellSettings.State != TenantState.Disabled)
             {
-                _notifier.Error(H["You can only enable a Disabled shell."]);
+                _notifier.Error(H["You can only enable a Disabled tenant."]);
             }
 
             shellSettings.State = TenantState.Running;
-            _orchardHost.UpdateShellSettings(shellSettings);
+            await _orchardHost.UpdateShellSettingsAsync(shellSettings);
 
             return RedirectToAction(nameof(Index));
         }
@@ -318,8 +321,7 @@ namespace OrchardCore.Tenants.Controllers
                 return Unauthorized();
             }
 
-            var shellContext = _orchardHost
-                .ListShellContexts()
+            var shellContext = (await _orchardHost.ListShellContextsAsync())
                 .OrderBy(x => x.Settings.Name)
                 .Where(x => string.Equals(x.Settings.Name, id, StringComparison.OrdinalIgnoreCase))
                 .FirstOrDefault();
@@ -336,19 +338,26 @@ namespace OrchardCore.Tenants.Controllers
             var redirectUrl = Url.Action(nameof(Index));
 
             var shellSettings = shellContext.Settings;
-            _orchardHost.ReloadShellContext(shellSettings);
+            await _orchardHost.ReloadShellContextAsync(shellSettings);
 
             return Redirect(redirectUrl);
         }
 
-        private void ValidateViewModel(EditTenantViewModel model, bool newTenant)
+        private async Task ValidateViewModel(EditTenantViewModel model, bool newTenant)
         {
+            var selectedProvider = _databaseProviders.FirstOrDefault(x => x.Value == model.DatabaseProvider);
+
+            if (selectedProvider != null && selectedProvider.HasConnectionString && String.IsNullOrWhiteSpace(model.ConnectionString))
+            {
+                ModelState.AddModelError(nameof(EditTenantViewModel.ConnectionString), S["The connection string is mandatory for this provider."]);
+            }
+
             if (string.IsNullOrWhiteSpace(model.Name))
             {
                 ModelState.AddModelError(nameof(EditTenantViewModel.Name), S["The tenant name is mandatory."]);
             }
 
-            var allShells = GetShells();
+            var allShells = await GetShellsAsync();
 
             if (newTenant && allShells.Any(tenant => string.Equals(tenant.Settings.Name, model.Name, StringComparison.OrdinalIgnoreCase)))
             {
@@ -380,9 +389,9 @@ namespace OrchardCore.Tenants.Controllers
             }
         }
 
-        private IEnumerable<ShellContext> GetShells()
+        private async Task<IEnumerable<ShellContext>> GetShellsAsync()
         {
-            return _orchardHost.ListShellContexts().OrderBy(x => x.Settings.Name);
+            return (await _orchardHost.ListShellContextsAsync()).OrderBy(x => x.Settings.Name);
         }
 
         private bool IsDefaultShell()

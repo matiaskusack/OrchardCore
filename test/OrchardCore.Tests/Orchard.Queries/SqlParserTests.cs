@@ -68,7 +68,7 @@ namespace OrchardCore.Tests.OrchardCore.Queries
         [InlineData("select a where a = false", "SELECT [a] WHERE [a] = 0;")]
         [InlineData("select a where a = 1", "SELECT [a] WHERE [a] = 1;")]
         [InlineData("select a where a = 1.234", "SELECT [a] WHERE [a] = 1.234;")]
-        [InlineData("select a where a = 'foo'", "SELECT [a] WHERE [a] = \"foo\";")]
+        [InlineData("select a where a = 'foo'", "SELECT [a] WHERE [a] = 'foo';")]
         [InlineData("select a where a between b and c", "SELECT [a] WHERE [a] BETWEEN [b] AND [c];")]
         [InlineData("select a where a not between b and c", "SELECT [a] WHERE [a] NOT BETWEEN [b] AND [c];")]
         [InlineData("select a where a = b or c = d", "SELECT [a] WHERE [a] = [b] OR [c] = [d];")]
@@ -168,7 +168,7 @@ namespace OrchardCore.Tests.OrchardCore.Queries
             var result = SqlParser.TryParse("SEL a", _defaultDialect, _defaultTablePrefix, null, out var rawQuery, out var messages);
 
             Assert.False(result);
-            Assert.Equal(1, messages.Count());
+            Assert.Single(messages);
             Assert.Contains("at line:0, col:0", messages.First());
         }
 

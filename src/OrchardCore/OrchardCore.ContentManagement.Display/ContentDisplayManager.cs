@@ -2,12 +2,11 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using OrchardCore.Modules;
 using Microsoft.Extensions.Logging;
 using OrchardCore.ContentManagement.Display.ContentDisplay;
 using OrchardCore.ContentManagement.Handlers;
-using OrchardCore.ContentManagement.Metadata.Settings;
 using OrchardCore.ContentManagement.Metadata;
+using OrchardCore.ContentManagement.Metadata.Settings;
 using OrchardCore.DisplayManagement;
 using OrchardCore.DisplayManagement.Descriptors;
 using OrchardCore.DisplayManagement.Handlers;
@@ -15,6 +14,7 @@ using OrchardCore.DisplayManagement.Layout;
 using OrchardCore.DisplayManagement.ModelBinding;
 using OrchardCore.DisplayManagement.Shapes;
 using OrchardCore.DisplayManagement.Theming;
+using OrchardCore.Modules;
 
 namespace OrchardCore.ContentManagement.Display
 {
@@ -92,7 +92,7 @@ namespace OrchardCore.ContentManagement.Display
                 groupId,
                 _shapeFactory,
                 await _layoutAccessor.GetLayoutAsync(),
-                updater
+                new ModelStateWrapperUpdater(updater)
             );
 
             await BindPlacementAsync(context);
@@ -128,7 +128,7 @@ namespace OrchardCore.ContentManagement.Display
                 htmlFieldPrefix,
                 _shapeFactory,
                 await _layoutAccessor.GetLayoutAsync(),
-                updater
+                new ModelStateWrapperUpdater(updater)
             );
 
             await BindPlacementAsync(context);
@@ -162,12 +162,12 @@ namespace OrchardCore.ContentManagement.Display
                 htmlFieldPrefix,
                 _shapeFactory,
                 await _layoutAccessor.GetLayoutAsync(),
-                updater
+                new ModelStateWrapperUpdater(updater)
             );
 
             await BindPlacementAsync(context);
 
-            var updateContentContext = new UpdateContentContext(contentItem, updater);
+            var updateContentContext = new UpdateContentContext(contentItem);
 
             await _contentHandlers.InvokeAsync(async handler => await handler.UpdatingAsync(updateContentContext), Logger);
             await _handlers.InvokeAsync(async handler => await handler.UpdateEditorAsync(contentItem, context), Logger);

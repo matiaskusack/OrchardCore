@@ -12,7 +12,7 @@
   // The variables are evaluated the first time they are accessed, and reused across steps
   "variables": {
     "landingContentItemId": "[js:uuid()]"
-    // "now": "[js: Date().toISOString()]"
+    // "now": "[js: new Date().toISOString()]"
   },
 
   "steps": [
@@ -21,11 +21,8 @@
       "disable": [],
       "enable": [
         // SaaS
-        "OrchardCore.Authentication",
-        "OrchardCore.Mvc",
         "OrchardCore.HomeRoute",
         "OrchardCore.Admin",
-        "OrchardCore.Commons",
         "OrchardCore.Diagnostics",
         "OrchardCore.DynamicCache",
         "OrchardCore.Features",
@@ -40,7 +37,7 @@
         // Content Management
         "OrchardCore.Alias",
         "OrchardCore.Autoroute",
-        "OrchardCore.Body",
+        "OrchardCore.Html",
         "OrchardCore.ContentFields",
         "OrchardCore.ContentPreview",
         "OrchardCore.Contents",
@@ -381,8 +378,8 @@
               }
             },
             {
-              "PartName": "BodyPart",
-              "Name": "BodyPart",
+              "PartName": "HtmlBodyPart",
+              "Name": "HtmlBodyPart",
               "Settings": {
                 "Position": "1"
               }
@@ -408,8 +405,8 @@
               }
             },
             {
-              "PartName": "BodyPart",
-              "Name": "BodyPart",
+              "PartName": "HtmlBodyPart",
+              "Name": "HtmlBodyPart",
               "Settings": {
                 "Position": "1"
               }
@@ -435,8 +432,8 @@
               }
             },
             {
-              "PartName": "BodyPart",
-              "Name": "BodyPart",
+              "PartName": "HtmlBodyPart",
+              "Name": "HtmlBodyPart",
               "Settings": {
                 "Position": "2"
               }
@@ -648,14 +645,6 @@
         }
       ],
       "ContentParts": [
-        {
-          "Name": "BlogPost",
-          "Settings": {}
-        },
-        {
-          "Name": "Article",
-          "Settings": {}
-        },
         {
           "Name": "HtmlWidget",
           "Settings": {},
@@ -1052,12 +1041,12 @@
         {
           "ContentItemId": "[js: uuid()]",
           "ContentType": "HtmlWidget",
+          "DisplayText": "Footer",
           "Latest": true,
           "Published": true,
           "Owner": "[js: parameters('AdminUsername')]",
           "Author": "[js: parameters('AdminUsername')]",
           "LayerMetadata": {
-            "Title": "Footer",
             "Layer": "Always",
             "Zone": "Footer",
             "RenderTitle": false,
@@ -1166,13 +1155,11 @@
           "ContentItemId": "[js:uuid()]",
           "ContentItemVersionId": "[js:uuid()]",
           "ContentType": "Menu",
+          "DisplayText": "Main Menu",
           "Latest": true,
           "Published": true,
-          "ModifiedUtc": "2017-08-16T00:32:59.1057293Z",
-          "PublishedUtc": "2017-08-16T00:32:59.1287452Z",
-          "CreatedUtc": "2017-08-16T00:32:59.1287452Z",
-          "Owner": null,
-          "Author": null,
+          "Owner": "[js: parameters('AdminUsername')]",
+          "Author": "[js: parameters('AdminUsername')]",
           "MenuPart": {},
           "TitlePart": {
             "Title": "Main Menu"
@@ -1229,13 +1216,11 @@
           "ContentItemId": "[js:uuid()]",
           "ContentItemVersionId": "[js:uuid()]",
           "ContentType": "LandingPage",
+          "DisplayText": "[js: parameters('SiteName')]",
           "Latest": true,
           "Published": true,
-          "ModifiedUtc": "2017-08-16T23:21:36.8836967Z",
-          "PublishedUtc": "2017-08-16T23:21:37.1612415Z",
-          "CreatedUtc": "2017-08-16T00:49:29.6251921Z",
-          "Owner": null,
-          "Author": "admin",
+          "Owner": "[js: parameters('AdminUsername')]",
+          "Author": "[js: parameters('AdminUsername')]",
           "LandingPage": {},
           "AutoroutePart": {
             "Path": "home-page",
@@ -1250,20 +1235,18 @@
                 "ContentItemId": "[js:uuid()]",
                 "ContentItemVersionId": "[js:uuid()]",
                 "ContentType": "Service",
+                "DisplayText": "E-Commerce",
                 "Latest": false,
                 "Published": false,
-                "ModifiedUtc": "2017-08-16T23:21:37.0437165Z",
-                "PublishedUtc": null,
-                "CreatedUtc": null,
                 "Owner": null,
-                "Author": "admin",
+                "Author": "[js: parameters('AdminUsername')]",
                 "Service": {
                   "IconClass": {
                     "Text": "fa-shopping-cart"
                   }
                 },
-                "BodyPart": {
-                  "Body": "Lorem ipsum dolor sit amet, consectetur adipisicing elit. Minima maxime quam architecto quo inventore harum ex magni, dicta impedit."
+                "HtmlBodyPart": {
+                  "Html": "Lorem ipsum dolor sit amet, consectetur adipisicing elit. Minima maxime quam architecto quo inventore harum ex magni, dicta impedit."
                 },
                 "TitlePart": {
                   "Title": "E-Commerce"
@@ -1273,20 +1256,18 @@
                 "ContentItemId": "[js:uuid()]",
                 "ContentItemVersionId": "[js:uuid()]",
                 "ContentType": "Service",
+                "DisplayText": "Responsive Design",
                 "Latest": false,
                 "Published": false,
-                "ModifiedUtc": "2017-08-16T23:21:37.0507163Z",
-                "PublishedUtc": null,
-                "CreatedUtc": null,
                 "Owner": null,
-                "Author": "admin",
+                "Author": "[js: parameters('AdminUsername')]",
                 "Service": {
                   "IconClass": {
                     "Text": "fa-laptop"
                   }
                 },
-                "BodyPart": {
-                  "Body": "Lorem ipsum dolor sit amet, consectetur adipisicing elit. Minima maxime quam architecto quo inventore harum ex magni, dicta impedit."
+                "HtmlBodyPart": {
+                  "Html": "Lorem ipsum dolor sit amet, consectetur adipisicing elit. Minima maxime quam architecto quo inventore harum ex magni, dicta impedit."
                 },
                 "TitlePart": {
                   "Title": "Responsive Design"
@@ -1296,20 +1277,18 @@
                 "ContentItemId": "[js:uuid()]",
                 "ContentItemVersionId": "[js:uuid()]",
                 "ContentType": "Service",
+                "DisplayText": "Web Security",
                 "Latest": false,
                 "Published": false,
-                "ModifiedUtc": "2017-08-16T23:21:37.0527169Z",
-                "PublishedUtc": null,
-                "CreatedUtc": null,
                 "Owner": null,
-                "Author": "admin",
+                "Author": "[js: parameters('AdminUsername')]",
                 "Service": {
                   "IconClass": {
                     "Text": "fa-lock"
                   }
                 },
-                "BodyPart": {
-                  "Body": "Lorem ipsum dolor sit amet, consectetur adipisicing elit. Minima maxime quam architecto quo inventore harum ex magni, dicta impedit."
+                "HtmlBodyPart": {
+                  "Html": "Lorem ipsum dolor sit amet, consectetur adipisicing elit. Minima maxime quam architecto quo inventore harum ex magni, dicta impedit."
                 },
                 "TitlePart": {
                   "Title": "Web Security"
@@ -1323,13 +1302,11 @@
                 "ContentItemId": "[js:uuid()]",
                 "ContentItemVersionId": "[js:uuid()]",
                 "ContentType": "Project",
+                "DisplayText": "Threads",
                 "Latest": false,
                 "Published": false,
-                "ModifiedUtc": "2017-08-16T23:21:37.0557279Z",
-                "PublishedUtc": null,
-                "CreatedUtc": null,
                 "Owner": null,
-                "Author": "admin",
+                "Author": "[js: parameters('AdminUsername')]",
                 "Project": {
                   "Image": {
                     "Paths": [
@@ -1340,8 +1317,8 @@
                     "Text": "Illustrations"
                   }
                 },
-                "BodyPart": {
-                  "Body": "Lorem ipsum dolor sit amet, consectetur adipisicing elit. Est blanditiis dolorem culpa incidunt minus dignissimos deserunt repellat aperiam quasi sunt officia expedita beatae cupiditate, maiores repudiandae, nostrum, reiciendis facere nemo!"
+                "HtmlBodyPart": {
+                  "Html": "Lorem ipsum dolor sit amet, consectetur adipisicing elit. Est blanditiis dolorem culpa incidunt minus dignissimos deserunt repellat aperiam quasi sunt officia expedita beatae cupiditate, maiores repudiandae, nostrum, reiciendis facere nemo!"
                 },
                 "TitlePart": {
                   "Title": "Threads"
@@ -1351,13 +1328,11 @@
                 "ContentItemId": "[js:uuid()]",
                 "ContentItemVersionId": "[js:uuid()]",
                 "ContentType": "Project",
+                "DisplayText": "Explore",
                 "Latest": false,
                 "Published": false,
-                "ModifiedUtc": "2017-08-16T23:21:37.0662276Z",
-                "PublishedUtc": null,
-                "CreatedUtc": null,
                 "Owner": null,
-                "Author": "admin",
+                "Author": "[js: parameters('AdminUsername')]",
                 "Project": {
                   "Image": {
                     "Paths": [
@@ -1368,8 +1343,8 @@
                     "Text": "Graphic Design"
                   }
                 },
-                "BodyPart": {
-                  "Body": "Lorem ipsum dolor sit amet, consectetur adipisicing elit. Est blanditiis dolorem culpa incidunt minus dignissimos deserunt repellat aperiam quasi sunt officia expedita beatae cupiditate, maiores repudiandae, nostrum, reiciendis facere nemo!"
+                "HtmlBodyPart": {
+                  "Html": "Lorem ipsum dolor sit amet, consectetur adipisicing elit. Est blanditiis dolorem culpa incidunt minus dignissimos deserunt repellat aperiam quasi sunt officia expedita beatae cupiditate, maiores repudiandae, nostrum, reiciendis facere nemo!"
                 },
                 "TitlePart": {
                   "Title": "Explore"
@@ -1379,13 +1354,11 @@
                 "ContentItemId": "[js:uuid()]",
                 "ContentItemVersionId": "[js:uuid()]",
                 "ContentType": "Project",
+                "DisplayText": "Finish",
                 "Latest": false,
                 "Published": false,
-                "ModifiedUtc": "2017-08-16T23:21:37.0687296Z",
-                "PublishedUtc": null,
-                "CreatedUtc": null,
                 "Owner": null,
-                "Author": "admin",
+                "Author": "[js: parameters('AdminUsername')]",
                 "Project": {
                   "Image": {
                     "Paths": [
@@ -1396,8 +1369,8 @@
                     "Text": "Identity"
                   }
                 },
-                "BodyPart": {
-                  "Body": "Lorem ipsum dolor sit amet, consectetur adipisicing elit. Est blanditiis dolorem culpa incidunt minus dignissimos deserunt repellat aperiam quasi sunt officia expedita beatae cupiditate, maiores repudiandae, nostrum, reiciendis facere nemo!"
+                "HtmlBodyPart": {
+                  "Html": "Lorem ipsum dolor sit amet, consectetur adipisicing elit. Est blanditiis dolorem culpa incidunt minus dignissimos deserunt repellat aperiam quasi sunt officia expedita beatae cupiditate, maiores repudiandae, nostrum, reiciendis facere nemo!"
                 },
                 "TitlePart": {
                   "Title": "Finish"
@@ -1407,13 +1380,11 @@
                 "ContentItemId": "[js:uuid()]",
                 "ContentItemVersionId": "[js:uuid()]",
                 "ContentType": "Project",
+                "DisplayText": "Lines",
                 "Latest": false,
                 "Published": false,
-                "ModifiedUtc": "2017-08-16T23:21:37.0717342Z",
-                "PublishedUtc": null,
-                "CreatedUtc": null,
                 "Owner": null,
-                "Author": "admin",
+                "Author": "[js: parameters('AdminUsername')]",
                 "Project": {
                   "Image": {
                     "Paths": [
@@ -1424,8 +1395,8 @@
                     "Text": "Branding"
                   }
                 },
-                "BodyPart": {
-                  "Body": "Lorem ipsum dolor sit amet, consectetur adipisicing elit. Est blanditiis dolorem culpa incidunt minus dignissimos deserunt repellat aperiam quasi sunt officia expedita beatae cupiditate, maiores repudiandae, nostrum, reiciendis facere nemo!"
+                "HtmlBodyPart": {
+                  "Html": "Lorem ipsum dolor sit amet, consectetur adipisicing elit. Est blanditiis dolorem culpa incidunt minus dignissimos deserunt repellat aperiam quasi sunt officia expedita beatae cupiditate, maiores repudiandae, nostrum, reiciendis facere nemo!"
                 },
                 "TitlePart": {
                   "Title": "Lines"
@@ -1435,13 +1406,11 @@
                 "ContentItemId": "[js:uuid()]",
                 "ContentItemVersionId": "[js:uuid()]",
                 "ContentType": "Project",
+                "DisplayText": "Southwest",
                 "Latest": false,
                 "Published": false,
-                "ModifiedUtc": "2017-08-16T23:21:37.0767335Z",
-                "PublishedUtc": null,
-                "CreatedUtc": null,
                 "Owner": null,
-                "Author": "admin",
+                "Author": "[js: parameters('AdminUsername')]",
                 "Project": {
                   "Image": {
                     "Paths": [
@@ -1452,8 +1421,8 @@
                     "Text": "Web Design"
                   }
                 },
-                "BodyPart": {
-                  "Body": "Lorem ipsum dolor sit amet, consectetur adipisicing elit. Est blanditiis dolorem culpa incidunt minus dignissimos deserunt repellat aperiam quasi sunt officia expedita beatae cupiditate, maiores repudiandae, nostrum, reiciendis facere nemo!"
+                "HtmlBodyPart": {
+                  "Html": "Lorem ipsum dolor sit amet, consectetur adipisicing elit. Est blanditiis dolorem culpa incidunt minus dignissimos deserunt repellat aperiam quasi sunt officia expedita beatae cupiditate, maiores repudiandae, nostrum, reiciendis facere nemo!"
                 },
                 "TitlePart": {
                   "Title": "Southwest"
@@ -1463,13 +1432,11 @@
                 "ContentItemId": "[js:uuid()]",
                 "ContentItemVersionId": "[js:uuid()]",
                 "ContentType": "Project",
+                "DisplayText": "Window",
                 "Latest": false,
                 "Published": false,
-                "ModifiedUtc": "2017-08-16T23:21:37.0797331Z",
-                "PublishedUtc": null,
-                "CreatedUtc": null,
                 "Owner": null,
-                "Author": "admin",
+                "Author": "[js: parameters('AdminUsername')]",
                 "Project": {
                   "Image": {
                     "Paths": [
@@ -1480,8 +1447,8 @@
                     "Text": "Photography"
                   }
                 },
-                "BodyPart": {
-                  "Body": "Lorem ipsum dolor sit amet, consectetur adipisicing elit. Est blanditiis dolorem culpa incidunt minus dignissimos deserunt repellat aperiam quasi sunt officia expedita beatae cupiditate, maiores repudiandae, nostrum, reiciendis facere nemo!"
+                "HtmlBodyPart": {
+                  "Html": "Lorem ipsum dolor sit amet, consectetur adipisicing elit. Est blanditiis dolorem culpa incidunt minus dignissimos deserunt repellat aperiam quasi sunt officia expedita beatae cupiditate, maiores repudiandae, nostrum, reiciendis facere nemo!"
                 },
                 "TitlePart": {
                   "Title": "Window"
@@ -1495,13 +1462,11 @@
                 "ContentItemId": "[js:uuid()]",
                 "ContentItemVersionId": "[js:uuid()]",
                 "ContentType": "Milestone",
+                "DisplayText": "Our Humble Beginnings",
                 "Latest": false,
                 "Published": false,
-                "ModifiedUtc": "2017-08-16T23:21:37.0827325Z",
-                "PublishedUtc": null,
-                "CreatedUtc": null,
                 "Owner": null,
-                "Author": "admin",
+                "Author": "[js: parameters('AdminUsername')]",
                 "Milestone": {
                   "Date": {
                     "Text": "2009-2011"
@@ -1512,8 +1477,8 @@
                     ]
                   }
                 },
-                "BodyPart": {
-                  "Body": "Lorem ipsum dolor sit amet, consectetur adipisicing elit. Sunt ut voluptatum eius sapiente, totam reiciendis temporibus qui quibusdam, recusandae sit vero unde, sed, incidunt et ea quo dolore laudantium consectetur!"
+                "HtmlBodyPart": {
+                  "Html": "Lorem ipsum dolor sit amet, consectetur adipisicing elit. Sunt ut voluptatum eius sapiente, totam reiciendis temporibus qui quibusdam, recusandae sit vero unde, sed, incidunt et ea quo dolore laudantium consectetur!"
                 },
                 "TitlePart": {
                   "Title": "Our Humble Beginnings"
@@ -1523,13 +1488,11 @@
                 "ContentItemId": "[js:uuid()]",
                 "ContentItemVersionId": "[js:uuid()]",
                 "ContentType": "Milestone",
+                "DisplayText": "An Agency is Born",
                 "Latest": false,
                 "Published": false,
-                "ModifiedUtc": "2017-08-16T23:21:37.0857333Z",
-                "PublishedUtc": null,
-                "CreatedUtc": null,
                 "Owner": null,
-                "Author": "admin",
+                "Author": "[js: parameters('AdminUsername')]",
                 "Milestone": {
                   "Date": {
                     "Text": "MARCH 2011"
@@ -1540,8 +1503,8 @@
                     ]
                   }
                 },
-                "BodyPart": {
-                  "Body": "Lorem ipsum dolor sit amet, consectetur adipisicing elit. Sunt ut voluptatum eius sapiente, totam reiciendis temporibus qui quibusdam, recusandae sit vero unde, sed, incidunt et ea quo dolore laudantium consectetur!\r\n"
+                "HtmlBodyPart": {
+                  "Html": "Lorem ipsum dolor sit amet, consectetur adipisicing elit. Sunt ut voluptatum eius sapiente, totam reiciendis temporibus qui quibusdam, recusandae sit vero unde, sed, incidunt et ea quo dolore laudantium consectetur!\r\n"
                 },
                 "TitlePart": {
                   "Title": "An Agency is Born"
@@ -1551,13 +1514,11 @@
                 "ContentItemId": "[js:uuid()]",
                 "ContentItemVersionId": "[js:uuid()]",
                 "ContentType": "Milestone",
+                "DisplayText": "Transition to Full Service",
                 "Latest": false,
                 "Published": false,
-                "ModifiedUtc": "2017-08-16T23:21:37.0887326Z",
-                "PublishedUtc": null,
-                "CreatedUtc": null,
                 "Owner": null,
-                "Author": "admin",
+                "Author": "[js: parameters('AdminUsername')]",
                 "Milestone": {
                   "Date": {
                     "Text": "DECEMBER 2012"
@@ -1568,8 +1529,8 @@
                     ]
                   }
                 },
-                "BodyPart": {
-                  "Body": "Lorem ipsum dolor sit amet, consectetur adipisicing elit. Sunt ut voluptatum eius sapiente, totam reiciendis temporibus qui quibusdam, recusandae sit vero unde, sed, incidunt et ea quo dolore laudantium consectetur!"
+                "HtmlBodyPart": {
+                  "Html": "Lorem ipsum dolor sit amet, consectetur adipisicing elit. Sunt ut voluptatum eius sapiente, totam reiciendis temporibus qui quibusdam, recusandae sit vero unde, sed, incidunt et ea quo dolore laudantium consectetur!"
                 },
                 "TitlePart": {
                   "Title": "Transition to Full Service"
@@ -1579,13 +1540,11 @@
                 "ContentItemId": "[js:uuid()]",
                 "ContentItemVersionId": "[js:uuid()]",
                 "ContentType": "Milestone",
+                "DisplayText": "Phase Two Expansion",
                 "Latest": false,
                 "Published": false,
-                "ModifiedUtc": "2017-08-16T23:21:37.0907331Z",
-                "PublishedUtc": null,
-                "CreatedUtc": null,
                 "Owner": null,
-                "Author": "admin",
+                "Author": "[js: parameters('AdminUsername')]",
                 "Milestone": {
                   "Date": {
                     "Text": "JULY 2014"
@@ -1596,8 +1555,8 @@
                     ]
                   }
                 },
-                "BodyPart": {
-                  "Body": "Lorem ipsum dolor sit amet, consectetur adipisicing elit. Sunt ut voluptatum eius sapiente, totam reiciendis temporibus qui quibusdam, recusandae sit vero unde, sed, incidunt et ea quo dolore laudantium consectetur!\r\n"
+                "HtmlBodyPart": {
+                  "Html": "Lorem ipsum dolor sit amet, consectetur adipisicing elit. Sunt ut voluptatum eius sapiente, totam reiciendis temporibus qui quibusdam, recusandae sit vero unde, sed, incidunt et ea quo dolore laudantium consectetur!\r\n"
                 },
                 "TitlePart": {
                   "Title": "Phase Two Expansion"
@@ -1611,13 +1570,11 @@
                 "ContentItemId": "[js:uuid()]",
                 "ContentItemVersionId": "[js:uuid()]",
                 "ContentType": "TeamMember",
+                "DisplayText": "Kay Garland",
                 "Latest": false,
                 "Published": false,
-                "ModifiedUtc": "2017-08-16T23:21:37.0947327Z",
-                "PublishedUtc": null,
-                "CreatedUtc": null,
                 "Owner": null,
-                "Author": "admin",
+                "Author": "[js: parameters('AdminUsername')]",
                 "TeamMember": {
                   "Occupation": {
                     "Text": "Lead Designer"
@@ -1645,13 +1602,11 @@
                 "ContentItemId": "[js:uuid()]",
                 "ContentItemVersionId": "[js:uuid()]",
                 "ContentType": "TeamMember",
+                "DisplayText": "Larry Parker",
                 "Latest": false,
                 "Published": false,
-                "ModifiedUtc": "2017-08-16T23:21:37.0977324Z",
-                "PublishedUtc": null,
-                "CreatedUtc": null,
                 "Owner": null,
-                "Author": "admin",
+                "Author": "[js: parameters('AdminUsername')]",
                 "TeamMember": {
                   "Occupation": {
                     "Text": "Lead Marketer"
@@ -1679,13 +1634,11 @@
                 "ContentItemId": "[js:uuid()]",
                 "ContentItemVersionId": "[js:uuid()]",
                 "ContentType": "TeamMember",
+                "DisplayText": "Diana Pertersen",
                 "Latest": false,
                 "Published": false,
-                "ModifiedUtc": "2017-08-16T23:21:37.1017334Z",
-                "PublishedUtc": null,
-                "CreatedUtc": null,
                 "Owner": null,
-                "Author": "admin",
+                "Author": "[js: parameters('AdminUsername')]",
                 "TeamMember": {
                   "Occupation": {
                     "Text": "Lead Developer"
@@ -1717,13 +1670,11 @@
                 "ContentItemId": "[js:uuid()]",
                 "ContentItemVersionId": "[js:uuid()]",
                 "ContentType": "Client",
+                "DisplayText": "Envato",
                 "Latest": false,
                 "Published": false,
-                "ModifiedUtc": "2017-08-16T23:21:37.1067324Z",
-                "PublishedUtc": null,
-                "CreatedUtc": null,
                 "Owner": null,
-                "Author": "admin",
+                "Author": "[js: parameters('AdminUsername')]",
                 "Client": {
                   "Logo": {
                     "Paths": [
@@ -1742,13 +1693,11 @@
                 "ContentItemId": "[js:uuid()]",
                 "ContentItemVersionId": "[js:uuid()]",
                 "ContentType": "Client",
+                "DisplayText": "Design Moto",
                 "Latest": false,
                 "Published": false,
-                "ModifiedUtc": "2017-08-16T23:21:37.108733Z",
-                "PublishedUtc": null,
-                "CreatedUtc": null,
                 "Owner": null,
-                "Author": "admin",
+                "Author": "[js: parameters('AdminUsername')]",
                 "Client": {
                   "Logo": {
                     "Paths": [
@@ -1767,13 +1716,11 @@
                 "ContentItemId": "[js:uuid()]",
                 "ContentItemVersionId": "[js:uuid()]",
                 "ContentType": "Client",
+                "DisplayText": "ThemeForest",
                 "Latest": false,
                 "Published": false,
-                "ModifiedUtc": "2017-08-16T23:21:37.1107326Z",
-                "PublishedUtc": null,
-                "CreatedUtc": null,
                 "Owner": null,
-                "Author": "admin",
+                "Author": "[js: parameters('AdminUsername')]",
                 "Client": {
                   "Logo": {
                     "Paths": [
@@ -1792,13 +1739,11 @@
                 "ContentItemId": "[js:uuid()]",
                 "ContentItemVersionId": "[js:uuid()]",
                 "ContentType": "Client",
+                "DisplayText": "Creative",
                 "Latest": false,
                 "Published": false,
-                "ModifiedUtc": "2017-08-16T23:21:37.1127323Z",
-                "PublishedUtc": null,
-                "CreatedUtc": null,
                 "Owner": null,
-                "Author": "admin",
+                "Author": "[js: parameters('AdminUsername')]",
                 "Client": {
                   "Logo": {
                     "Paths": [
