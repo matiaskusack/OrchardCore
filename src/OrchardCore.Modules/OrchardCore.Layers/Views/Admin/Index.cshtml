@@ -7,11 +7,11 @@
 @inject OrchardCore.ContentManagement.Display.IContentItemDisplayManager ContentItemDisplayManager
 
 @{
-    var widgetContentTypes = ContentDefinitionManager.ListTypeDefinitions().Where(t => t.Settings.ToObject<ContentTypeSettings>().Stereotype == "Widget");
+    var widgetContentTypes = ContentDefinitionManager.ListTypeDefinitions().Where(t => t.GetSettings<ContentTypeSettings>().Stereotype == "Widget");
 }
 <script asp-name="jquery-ui" at="Foot"></script>
 
-<h1>@RenderTitleSegments(T["Edit Widget Layers"])</h1>
+<h1>@RenderTitleSegments(T["Edit Widgets and Layers"])</h1>
 
 <form id="undo-form" asp-action="UpdatePosition" method="post">
     <div id="layer-undo-message" class="alert alert-success alert-dismissible show d-none" role="alert">
@@ -39,7 +39,7 @@
                     </div>
                     <div class="layer-zone card-body" data-zone="@zone">
                         <div class="form-group">
-                            <ul class="list-group">
+                            <ul class="list-group zones">
                                 @if (Model.Widgets.ContainsKey(zone))
                                 {
                                     foreach (var contentItemSummary in Model.Widgets[zone])
@@ -48,7 +48,9 @@
 
                                         maxPosition = Math.Max(maxPosition, (double)contentItemSummary.ContentItem.Content.LayerMetadata.Position);
                                         <li class="list-group-item">
-                                            @await DisplayAsync(contentItemSummary)
+                                            <div class="properties cursor-move">
+                                                @await DisplayAsync(contentItemSummary)
+                                            </div>
                                             <input type="hidden"
                                                    class="layer-metadata"
                                                    data-zone="@zone"
@@ -69,7 +71,7 @@
                                 {
                                     var contentItem = await ContentManager.NewAsync(type.Name);
                                     var createRoute = (await ContentManager.PopulateAspectAsync<ContentItemMetadata>(contentItem)).CreateRouteValues;
-                                    createRoute["returnUrl"] = Context.Request.Path;
+                                    createRoute["returnUrl"] = Context.Request.PathBase + Context.Request.Path;
                                     createRoute["LayerMetadata.Zone"] = zone;
                                     createRoute["LayerMetadata.Position"] = maxPosition + 1;
                                     <a class="dropdown-item add-list-widget btn-sm"
@@ -95,18 +97,19 @@
                 {
                     <li class="list-group-item">
                         <div class="properties">
-                            <div class="related">
-                                <a class="btn btn-primary btn-sm" href="@Url.Action("Edit", "Admin", new { area = "OrchardCore.Layers", name = layer.Name })">@T["Edit"]</a>
-                                <a class="btn btn-danger btn-sm" href="@Url.Action("Delete", "Admin", new { area = "OrchardCore.Layers", name = layer.Name })" itemprop="RemoveUrl UnsafeUrl">@T["Delete"]</a>
+                            <div class="d-flex flex-wrap">
+                                <div class="custom-control custom-checkbox mr-auto flex-grow-1">
+                                    <input type="checkbox" class="custom-control-input layer-check" id="@layer.Name" value="@layer.Name">
+                                    <label class="custom-control-label" for="@layer.Name">@layer.Name</label>
+                                </div>
+                                <div>
+                                    <a class="btn btn-primary btn-sm" href="@Url.Action("Edit", "Admin", new { area = "OrchardCore.Layers", name = layer.Name })">@T["Edit"]</a>
+                                    <a class="btn btn-danger btn-sm" href="@Url.Action("Delete", "Admin", new { area = "OrchardCore.Layers", name = layer.Name })" itemprop="RemoveUrl UnsafeUrl">@T["Delete"]</a>
+                                </div>
                             </div>
-
                             <div>
-                                <label>
-                                    <input type="checkbox" class="layer-check" value="@layer.Name">
-                                    @layer.Name
-                                </label>
+                                <span class="hint">@layer.Description</span>
                             </div>
-                            <span class="hint">@layer.Description</span>
                         </div>
                     </li>
                 }
@@ -122,7 +125,7 @@
 </div>
 
 <script at="Foot">
-    $(".list-group").sortable({
+    $(".list-group.zones").sortable({
         handle: ".properties",
         cursor: "move",
         connectWith: '.list-group',

@@ -28,7 +28,6 @@ namespace OrchardCore.Setup.ViewModels
         public string UserName { get; set; }
 
         [Required]
-        [EmailAddress]
         public string Email { get; set; }
 
         [DataType(DataType.Password)]
@@ -41,8 +40,12 @@ namespace OrchardCore.Setup.ViewModels
 
         public IEnumerable<RecipeDescriptor> Recipes { get; set; }
 
+        public bool RecipeNamePreset { get; set; }
+
         public string RecipeName { get; set; }
 
         public string SiteTimeZone { get; set; }
+
+        public string Secret { get; set; }
     }
 }

@@ -13,15 +13,14 @@ namespace OrchardCore.ContentFields.Fields
     {
         public override IDisplayResult Display(TimeField field, BuildFieldDisplayContext context)
         {
-            return Initialize<DisplayTimeFieldViewModel>("TimeField", model =>
+            return Initialize<DisplayTimeFieldViewModel>(GetDisplayShapeType(context), model =>
             {
                 model.Field = field;
                 model.Part = context.ContentPart;
                 model.PartFieldDefinition = context.PartFieldDefinition;
             })
-            .Location("Content")
-            .Location("SummaryAdmin", "");
-            ;
+            .Location("Detail", "Content")
+            .Location("Summary", "Content");
         }
 
         public override IDisplayResult Edit(TimeField field, BuildFieldEditorContext context)

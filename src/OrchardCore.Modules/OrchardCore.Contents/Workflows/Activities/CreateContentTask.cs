@@ -23,7 +23,10 @@ namespace OrchardCore.Contents.Workflows.Activities
         }
 
         public override string Name => nameof(CreateContentTask);
-        public override LocalizedString Category => T["Content"];
+
+        public override LocalizedString Category => S["Content"];
+
+        public override LocalizedString DisplayText => S["Create Content Task"];
 
         public string ContentType
         {
@@ -39,7 +42,7 @@ namespace OrchardCore.Contents.Workflows.Activities
 
         public WorkflowExpression<string> ContentProperties
         {
-            get => GetProperty(() => new WorkflowExpression<string>(JsonConvert.SerializeObject(new { TitlePart = new { Title = "" } }, Formatting.Indented)));
+            get => GetProperty(() => new WorkflowExpression<string>(JsonConvert.SerializeObject(new { DisplayText = S["Enter a title"].Value }, Formatting.Indented)));
             set => SetProperty(value);
         }
 
@@ -50,7 +53,7 @@ namespace OrchardCore.Contents.Workflows.Activities
 
         public override IEnumerable<Outcome> GetPossibleOutcomes(WorkflowExecutionContext workflowContext, ActivityContext activityContext)
         {
-            return Outcomes(T["Done"]);
+            return Outcomes(S["Done"]);
         }
 
         public async override Task<ActivityExecutionResult> ExecuteAsync(WorkflowExecutionContext workflowContext, ActivityContext activityContext)
@@ -60,13 +63,10 @@ namespace OrchardCore.Contents.Workflows.Activities
             if (!string.IsNullOrWhiteSpace(ContentProperties.Expression))
             {
                 var contentProperties = await _expressionEvaluator.EvaluateAsync(ContentProperties, workflowContext);
-                var propertyObject = JObject.Parse(contentProperties);
-
-                ((JObject)contentItem.Content).Merge(propertyObject);
+                contentItem.Merge(JObject.Parse(contentProperties));
             }
 
-            var versionOptions = Publish ? VersionOptions.Published : VersionOptions.Draft;
-            await ContentManager.CreateAsync(contentItem, versionOptions);
+            await ContentManager.CreateAsync(contentItem, Publish ? VersionOptions.Published : VersionOptions.Draft, true);
 
             workflowContext.LastResult = contentItem;
             workflowContext.CorrelationId = contentItem.ContentItemId;
